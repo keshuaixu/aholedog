@@ -1,11 +1,14 @@
 # Stolen from https://gist.github.com/hugs/4231272
-
 # Original code from
 # http://forums.trossenrobotics.com/tutorials/introduction-129/delta-robot-kinematics-3276/
 # License: MIT
 
 import math
-import numpy as np
+
+
+class UnsolvableIKError(RuntimeError):
+    pass
+
 
 # Specific geometry for bitbeambot:
 # http://flic.kr/p/cYaQah
@@ -18,9 +21,9 @@ rf = 88.0
 s = 165 * 2
 sqrt3 = math.sqrt(3.0)
 pi = math.pi
-sin120 = np.sin(np.deg2rad(120))
+sin120 = sqrt3 / 2.0
 cos120 = -0.5
-tan60 = np.tan
+tan60 = sqrt3
 sin30 = 0.5
 tan30 = 1.0 / sqrt3
 
@@ -84,8 +87,8 @@ def forward(theta1, theta2, theta3):
 # Inverse kinematics
 # Helper functions, calculates angle theta1 (for YZ-pane)
 def angle_yz(x0, y0, z0, theta=None):
-    y1 = -0.5 * 0.57735 * f  # f/2 * tg 30
-    y0 -= 0.5 * 0.57735 * e  # shift center to edge
+    y1 = -0.5 * tan30 * f  # f/2 * tg 30
+    y0 -= 0.5 * tan30 * e  # shift center to edge
     # z = a + b*y
     a = (x0 * x0 + y0 * y0 + z0 * z0 + rf * rf - re * re - y1 * y1) / (2.0 * z0)
     b = (y1 - y0) / z0
@@ -122,4 +125,7 @@ def inverse(x0, y0, z0):
                           theta3)
     theta3 = status[1]
 
-    return [status[0], theta1, theta2, theta3]
+    if not status[0]:
+        raise UnsolvableIKError()
+
+    return theta1, theta2, theta3
