@@ -4,6 +4,7 @@
 # License: MIT
 
 import math
+import numpy as np
 
 
 class UnsolvableIKError(RuntimeError):
@@ -12,13 +13,12 @@ class UnsolvableIKError(RuntimeError):
 
 # Specific geometry for bitbeambot:
 # http://flic.kr/p/cYaQah
-e = 26.0
-f = 69.0
-re = 128.0
-rf = 88.0
+e = 14.66 / 2
+f = 21.50
+re = 50.00
+rf = 15.00
 
 # Trigonometric constants
-s = 165 * 2
 sqrt3 = math.sqrt(3.0)
 pi = math.pi
 sin120 = sqrt3 / 2.0
@@ -125,7 +125,18 @@ def inverse(x0, y0, z0):
                           theta3)
     theta3 = status[1]
 
-    if not status[0]:
+    if not status[0] == 0:
         raise UnsolvableIKError()
 
     return theta1, theta2, theta3
+
+
+def inverse_arr(arr: np.core.multiarray):
+    horz = []
+    for t in range(arr.shape[1]):
+        vert = []
+        for i in range(4):
+            th1, th2, th3 = inverse(arr[3 * i, t], arr[3 * i + 1, t], arr[3 * i + 2, t])
+            vert.append(np.array([th1, th2, th3]).reshape(3,1))
+        horz.append(np.vstack(tuple(vert)))
+    return np.hstack(tuple(horz))
