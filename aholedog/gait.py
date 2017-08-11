@@ -7,7 +7,7 @@ import itertools
 import matplotlib.pyplot as plt
 import threading
 
-from aholedog.delta_kinematics import inverse_arr
+from aholedog.delta_kinematics import inverse_arr, UnsolvableIKError
 
 Step = namedtuple('Step', ['x', 'y', 'rz'])
 
@@ -73,21 +73,31 @@ class GaitGenerator:
             self.current_cycle = filtered[:, :self.current_cycle_unfiltered.shape[1] - 1]
             self.next_cycle = filtered[:, self.current_cycle_unfiltered.shape[1]:]
             self.combined_cycle = filtered
+        try:
             self.motor_position = inverse_arr(filtered)
+        except UnsolvableIKError:
+            pass
+
+    def plot(self, axarr: List[plt.Axes]):
+        for i in range(12):
+            axarr[i][0].plot(range(self.combined_cycle.shape[1]), self.combined_cycle[i, :])
+            axarr[i][0].axvline(x=self.current_cycle_t, color='gray', alpha=0.5)
+            axarr[i][1].plot(range(self.motor_position.shape[1]), self.motor_position[i, :])
+            axarr[i][1].axvline(x=self.current_cycle_t, color='gray', alpha=0.5)
 
 
-def plot(gaitgen: GaitGenerator, axarr: List[plt.Axes]):
-    for i in range(12):
-        axarr[i][0].plot(range(gaitgen.combined_cycle.shape[1]), gaitgen.combined_cycle[i, :])
-        axarr[i][0].axvline(x=gaitgen.current_cycle_t, color='gray', alpha=0.5)
-        axarr[i][1].plot(range(gaitgen.motor_position.shape[1]), gaitgen.motor_position[i, :])
-        axarr[i][1].axvline(x=gaitgen.current_cycle_t, color='gray', alpha=0.5)
+# def plot(gaitgen: GaitGenerator, axarr: List[plt.Axes]):
+#     for i in range(12):
+#         axarr[i][0].plot(range(gaitgen.combined_cycle.shape[1]), gaitgen.combined_cycle[i, :])
+#         axarr[i][0].axvline(x=gaitgen.current_cycle_t, color='gray', alpha=0.5)
+#         axarr[i][1].plot(range(gaitgen.motor_position.shape[1]), gaitgen.motor_position[i, :])
+#         axarr[i][1].axvline(x=gaitgen.current_cycle_t, color='gray', alpha=0.5)
 
 
 gaitgen = GaitGenerator()
 gaitgen.update(Step(0, 0, 0))
-gaitgen.update(Step(0, 0, 0))
-gaitgen.update(Step(0, 0, 0))
+gaitgen.update(Step(10, 0, 0))
+gaitgen.update(Step(20, 0, 0))
 fig, axarr = plt.subplots(nrows=12, ncols=2, sharex=True)
-plot(gaitgen, axarr)
+gaitgen.plot(axarr)
 plt.show()
