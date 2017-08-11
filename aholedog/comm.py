@@ -11,5 +11,6 @@ class Comm:
         self.h.set_nonblocking(1)
 
     def write(self, angles):
+        angles = list(map(int,angles))
         out = struct.pack('B' * len(angles) + 'x' * (64 - len(angles)), *angles)
         self.h.write(out)

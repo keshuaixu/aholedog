@@ -39,6 +39,7 @@ def synth_walk(z, lift_height, period, dt, prev_step: Step, this_step: Step, **k
 
 class GaitGenerator:
     def __init__(self):
+        self.lines = []
         self.current_cycle_t = 0
         self.current_cycle = np.empty((12, 0))
         self.current_cycle_unfiltered = np.empty((12, 0))
@@ -52,7 +53,7 @@ class GaitGenerator:
         self.motor_position = np.empty((12, 0))
         self.raw_motor_position = np.empty((12, 0))
 
-    def foot_position(self):
+    def step(self):
         with self.lock:
             self.current_cycle_t += 1
             if self.current_cycle_t >= self.current_cycle.shape[1]:
@@ -60,13 +61,11 @@ class GaitGenerator:
                 self.current_cycle_t = 0
                 self.current_cycle_unfiltered = self.next_cycle_unfiltered
                 self.current_step = self.input_step
-            position = self.current_cycle[:, self.current_cycle_t]
-        return position
 
     def update(self, step: Step):
         self.input_step = step
         with self.lock:
-            _, self.next_cycle_unfiltered = synth_walk(z=-60, lift_height=step.lift_z, period=step.period, dt=0.01,
+            _, self.next_cycle_unfiltered = synth_walk(z=-60, lift_height=step.lift_z, period=step.period, dt=0.1,
                                                        prev_step=self.current_step,
                                                        this_step=step)
             if self.current_cycle_unfiltered.shape[1] == 0:
@@ -87,8 +86,23 @@ class GaitGenerator:
                 self.update()
 
     def plot(self, axarr: List[plt.Axes]):
+        if len(self.lines) < 12:
+            for i in range(12):
+                l1, = axarr[i][0].plot(range(self.combined_cycle.shape[1]), self.combined_cycle[i, :])
+                l2 = axarr[i][0].axvline(x=self.current_cycle_t, color='gray', alpha=0.5)
+                l3, = axarr[i][1].plot(range(self.raw_motor_position.shape[1]), self.motor_position[i, :])
+                l4 = axarr[i][1].axvline(x=self.current_cycle_t, color='gray', alpha=0.5)
+                self.lines.append([l1, l2, l3, l4])
+        else:
+            self.redraw(axarr)
+            for ax in axarr:
+                for ax2 in ax:
+                    ax2.relim()
+
+    def redraw(self, axarr: List[plt.Axes]):
         for i in range(12):
-            axarr[i][0].plot(range(self.combined_cycle.shape[1]), self.combined_cycle[i, :])
-            axarr[i][0].axvline(x=self.current_cycle_t, color='gray', alpha=0.5)
-            axarr[i][1].plot(range(self.raw_motor_position.shape[1]), self.motor_position[i, :])
-            axarr[i][1].axvline(x=self.current_cycle_t, color='gray', alpha=0.5)
+            self.lines[i][0].set_ydata(self.combined_cycle[i, :])
+            self.lines[i][1].set_xdata(self.current_cycle_t)
+            self.lines[i][2].set_ydata(self.motor_position[i, :])
+            self.lines[i][3].set_xdata(self.current_cycle_t)
+
