@@ -65,7 +65,7 @@ class GaitGenerator:
     def update(self, step: Step):
         self.input_step = step
         with self.lock:
-            _, self.next_cycle_unfiltered = synth_walk(z=-60, lift_height=step.lift_z, period=step.period, dt=0.1,
+            _, self.next_cycle_unfiltered = synth_walk(z=-60, lift_height=step.lift_z, period=step.period, dt=0.05,
                                                        prev_step=self.current_step,
                                                        this_step=step)
             if self.current_cycle_unfiltered.shape[1] == 0:
