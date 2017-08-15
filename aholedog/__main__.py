@@ -63,12 +63,16 @@ class AHoleDog():
 
         pygame.event.pump()
 
-        kp = 20
+        kp = 15
 
         y = self.js.get_axis(0) * kp
         x = self.js.get_axis(1) * kp
-        z = self.js.get_axis(2) * 10
-        self.gaitgen.update(Step(x, y, 0, -50 + z, lift_z=10, period=1))
+        # z = self.js.get_axis(2) * 10
+        # z = 8
+        # throttle = self.js.get_axis(2)
+        zz = self.js.get_axis(2)
+        print((zz+1)*5)
+        self.gaitgen.update(Step(x, y, 0, -54, lift_z=(zz+1)*5, period=0.32))
 
 
 

@@ -17,7 +17,8 @@ comfy_z = -50
 def synth_walk(z, lift_height, period, dt, prev_step: Step, this_step: Step, **kwargs):
     t = np.linspace(0, period, period / dt, endpoint=False)
 
-    z_waveform = signal.square(2.00001 * np.pi * 1 * t)
+    # z_waveform = signal.square(2 * np.pi * 1 * t)
+    z_waveform = np.array([1] * int(t.shape[0]/2) + [-1] * (t.shape[0] - int(t.shape[0]/2)))
     z_1 = z + (z_waveform * 0.5 + 1) * lift_height
     z_3 = z_1
     z_2 = z + ((-1) * z_waveform * 0.5 + 1) * lift_height
@@ -71,8 +72,9 @@ class GaitGenerator:
         self.next_cycle_unfiltered = np.empty((12, 0))
         self.combined_cycle = np.empty((12, 0))
         self.lock = threading.RLock()
-        b, a = signal.butter(1, 0.2, output='ba')
+        b, a = signal.butter(1, 0.5, output='ba')
         self.filter = lambda x: signal.filtfilt(b, a, x, axis=1)
+        # self.filter = lambda x: x
         self.motor_position = np.empty((12, 0))
         self.raw_motor_position = np.empty((12, 0))
         self.synthesizer = synthesizer
