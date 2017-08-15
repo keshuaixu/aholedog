@@ -6,7 +6,7 @@ import time
 from multiprocessing import Process
 
 from aholedog.comm import Comm
-from aholedog.gait import GaitGenerator, Step, synth_walk_debug
+from aholedog.gait import GaitGenerator, Step, synth_walk_debug, synth_walk
 import matplotlib.pyplot as plt
 from threading import Timer, Thread
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -38,7 +38,7 @@ class AHoleDog():
             self.js = pygame.joystick.Joystick(0)
             self.js.init()
 
-        self.gaitgen = GaitGenerator(synthesizer=synth_walk_debug)
+        self.gaitgen = GaitGenerator(synthesizer=synth_walk)
         if plot:
             self.plotter = GaitPlotter(self.gaitgen)
 
@@ -68,7 +68,7 @@ class AHoleDog():
         y = self.js.get_axis(0) * kp
         x = self.js.get_axis(1) * kp
         z = self.js.get_axis(2) * 10
-        self.gaitgen.update(Step(x, y, 0, -50 + z, lift_z=5, period=0.1))
+        self.gaitgen.update(Step(x, y, 0, -50 + z, lift_z=10, period=1))
 
 
 

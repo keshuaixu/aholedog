@@ -17,13 +17,12 @@ comfy_z = -50
 def synth_walk(z, lift_height, period, dt, prev_step: Step, this_step: Step, **kwargs):
     t = np.linspace(0, period, period / dt, endpoint=False)
 
-    z_waveform = signal.square(2 * np.pi * 1 * t)
+    z_waveform = signal.square(2.00001 * np.pi * 1 * t)
     z_1 = z + (z_waveform * 0.5 + 1) * lift_height
     z_3 = z_1
     z_2 = z + ((-1) * z_waveform * 0.5 + 1) * lift_height
     z_4 = z_2
 
-    x_1 = y_1 = x_2 = y_2 = x_3 = y_3 = x_4 = y_4 = np.zeros(len(t))
     half_t = int(len(t) / 2)
     x_1 = x_3 = np.hstack((np.linspace(- prev_step.x / 2, this_step.x / 2, half_t),
                            np.linspace(this_step.x / 2, -this_step.x / 2, len(t) - half_t)))
@@ -90,7 +89,7 @@ class GaitGenerator:
     def update(self, step: Step):
         self.input_step = step
         with self.lock:
-            _, self.next_cycle_unfiltered = self.synthesizer(z=-60, lift_height=step.lift_z, period=step.period,
+            _, self.next_cycle_unfiltered = self.synthesizer(z=step.body_z, lift_height=step.lift_z, period=step.period,
                                                              dt=0.02,
                                                              prev_step=self.current_step,
                                                              this_step=step)
