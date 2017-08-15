@@ -6,7 +6,7 @@ import time
 from multiprocessing import Process
 
 from aholedog.comm import Comm
-from aholedog.gait import GaitGenerator, Step
+from aholedog.gait import GaitGenerator, Step, synth_walk_debug
 import matplotlib.pyplot as plt
 from threading import Timer, Thread
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -38,7 +38,7 @@ class AHoleDog():
             self.js = pygame.joystick.Joystick(0)
             self.js.init()
 
-        self.gaitgen = GaitGenerator()
+        self.gaitgen = GaitGenerator(synthesizer=synth_walk_debug)
         if plot:
             self.plotter = GaitPlotter(self.gaitgen)
 
@@ -54,7 +54,7 @@ class AHoleDog():
         if self.have_joystick:
             scheduler.add_job(self.read_joysticks, 'interval', seconds=0.1)
         if self.realdog:
-            scheduler.add_job(self.update_servos, 'interval', seconds=0.05)
+            scheduler.add_job(self.update_servos, 'interval', seconds=0.02)
 
 
 
@@ -63,12 +63,12 @@ class AHoleDog():
 
         pygame.event.pump()
 
-        kp = 10
+        kp = 20
 
         y = self.js.get_axis(0) * kp
         x = self.js.get_axis(1) * kp
-        z = self.js.get_axis(2) * kp
-        self.gaitgen.update(Step(x, y, 0, -50 + z, lift_z=5, period=1))
+        z = self.js.get_axis(2) * 10
+        self.gaitgen.update(Step(x, y, 0, -50 + z, lift_z=5, period=0.1))
 
 
 
@@ -77,9 +77,12 @@ class AHoleDog():
         self.c.write(self.gaitgen.raw_motor_position[:, self.gaitgen.current_cycle_t])
 
 if __name__ == '__main__':
-    dog = AHoleDog(realdog=True, plot=True)
-    dog.run_scheduler()
+    # dog = AHoleDog(realdog=True, plot=True)
+    # dog.run_scheduler()
     # time.sleep(10)
     # dog.run_multiprocess()
+    dog = AHoleDog(realdog=True, joystick=True, plot=False)
+    dog.run_scheduler()
+    # dog.c.write()
     while True:
         time.sleep(1)

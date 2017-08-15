@@ -29,6 +29,30 @@ def synth_walk(z, lift_height, period, dt, prev_step: Step, this_step: Step, **k
                            np.linspace(this_step.x / 2, -this_step.x / 2, len(t) - half_t)))
     y_1 = y_3 = np.hstack((np.linspace(- prev_step.y / 2, this_step.y / 2, half_t),
                            np.linspace(this_step.y / 2, -this_step.y / 2, len(t) - half_t)))
+    x_2 = x_4 = np.hstack((np.linspace(prev_step.x / 2, -this_step.x / 2, len(t) - half_t),
+                           np.linspace(- this_step.x / 2, this_step.x / 2, half_t)
+                           ))
+    y_2 = y_4 = np.hstack((np.linspace(prev_step.y / 2, -this_step.y / 2, len(t) - half_t),
+                           np.linspace(- this_step.y / 2, this_step.y / 2, half_t)
+                           ))
+
+    return t, np.vstack((x_1, y_1, z_1, x_2, y_2, z_2, x_3, y_3, z_3, x_4, y_4, z_4))
+
+
+def synth_walk_debug(z, lift_height, period, dt, prev_step: Step, this_step: Step, **kwargs):
+    t = np.linspace(0, period, period / dt, endpoint=False)
+    # t=1
+
+    # z_waveform = signal.square(2 * np.pi * 1 * t)
+    # z_1 = z + (z_waveform * 0.5 + 1) * lift_height
+    # z_3 = z_1
+    # z_2 = z + ((-1) * z_waveform * 0.5 + 1) * lift_height
+    # z_4 = z_2
+
+
+    z_1 = z_2 = z_3 = z_4 = np.array([this_step.body_z] * t.shape[0])
+    x_1 = x_2 = x_3 = x_4 = np.array([this_step.x] * t.shape[0])
+    y_1 = y_2 = y_3 = y_4 = np.array([this_step.y] * t.shape[0])
     # x_2 = 0  # TODO
     # x_4 = x_2
 
@@ -38,7 +62,7 @@ def synth_walk(z, lift_height, period, dt, prev_step: Step, this_step: Step, **k
 
 
 class GaitGenerator:
-    def __init__(self):
+    def __init__(self, synthesizer=synth_walk):
         self.lines = []
         self.current_cycle_t = 0
         self.current_cycle = np.empty((12, 0))
@@ -52,6 +76,7 @@ class GaitGenerator:
         self.filter = lambda x: signal.filtfilt(b, a, x, axis=1)
         self.motor_position = np.empty((12, 0))
         self.raw_motor_position = np.empty((12, 0))
+        self.synthesizer = synthesizer
 
     def step(self):
         with self.lock:
@@ -65,9 +90,10 @@ class GaitGenerator:
     def update(self, step: Step):
         self.input_step = step
         with self.lock:
-            _, self.next_cycle_unfiltered = synth_walk(z=-60, lift_height=step.lift_z, period=step.period, dt=0.05,
-                                                       prev_step=self.current_step,
-                                                       this_step=step)
+            _, self.next_cycle_unfiltered = self.synthesizer(z=-60, lift_height=step.lift_z, period=step.period,
+                                                             dt=0.02,
+                                                             prev_step=self.current_step,
+                                                             this_step=step)
             if self.current_cycle_unfiltered.shape[1] == 0:
                 self.current_cycle_unfiltered = self.next_cycle_unfiltered
 
@@ -105,4 +131,3 @@ class GaitGenerator:
             self.lines[i][1].set_xdata(self.current_cycle_t)
             self.lines[i][2].set_ydata(self.motor_position[i, :])
             self.lines[i][3].set_xdata(self.current_cycle_t)
-
