@@ -135,11 +135,14 @@ def inverse_arr(arr: np.core.multiarray):
     horz = []
     leg_dir = [1, 1, -1, -1]
     # leg_dir = [1, 0, 0, 0]
+    leg_offset_x = np.array([-1, -1, 1, 1]) * 0
+    leg_offset_y = np.array([-1, 1, 1, -1]) * 0
 
     for t in range(arr.shape[1]):
         vert = []
         for i in range(4):
-            th1, th2, th3 = inverse(-leg_dir[i] * arr[3 * i + 1, t], leg_dir[i] * arr[3 * i, t], arr[3 * i + 2, t])
+            th1, th2, th3 = inverse(-leg_dir[i] * (arr[3 * i + 1, t] + leg_offset_y[i]),
+                                    leg_dir[i] * (arr[3 * i, t] + leg_offset_x[i]), arr[3 * i + 2, t])
             vert.append(np.array([th1, th2, th3]).reshape(3, 1))
         horz.append(np.vstack(tuple(vert)))
     return np.hstack(tuple(horz))

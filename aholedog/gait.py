@@ -18,7 +18,12 @@ def synth_walk(z, lift_height, period, dt, prev_step: Step, this_step: Step, **k
     t = np.linspace(0, period, period / dt, endpoint=False)
 
     # z_waveform = signal.square(2 * np.pi * 1 * t)
-    z_waveform = np.array([1] * int(t.shape[0]/2) + [-1] * (t.shape[0] - int(t.shape[0]/2)))
+    z_waveform_not_moving = np.array([0]*t.shape[0])
+    z_waveform_moving = np.array([1] * int(t.shape[0]/2) + [-1] * (t.shape[0] - int(t.shape[0]/2)))
+    if this_step.x**2 + this_step.y**2 < 2:
+        z_waveform = z_waveform_not_moving
+    else:
+        z_waveform = z_waveform_moving
     z_1 = z + (z_waveform * 0.5 + 1) * lift_height
     z_3 = z_1
     z_2 = z + ((-1) * z_waveform * 0.5 + 1) * lift_height
