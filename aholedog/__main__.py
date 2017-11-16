@@ -5,6 +5,8 @@ import time
 
 from multiprocessing import Process
 
+from math import sqrt
+
 from aholedog.comm import Comm
 from aholedog.gait import GaitGenerator, Step, synth_walk_debug, synth_walk
 import matplotlib.pyplot as plt
@@ -63,16 +65,20 @@ class AHoleDog():
 
         pygame.event.pump()
 
-        kp = 15
+        kp = 30
 
-        y = self.js.get_axis(0) * kp
-        x = self.js.get_axis(1) * kp
+        y0 = self.js.get_axis(0)
+        x0 = self.js.get_axis(1)
+
+        y = y0 * kp
+        x = x0 * kp
         # z = self.js.get_axis(2) * 10
         # z = 8
         # throttle = self.js.get_axis(2)
         zz = self.js.get_axis(2)
         print((zz+1)*5)
-        self.gaitgen.update(Step(x, y, 0, -54, lift_z=(zz+1)*5, period=0.32))
+        vel = sqrt(x0**2 + y0**2)
+        self.gaitgen.update(Step(x, y, 0, -54, lift_z=(zz+1)*4 + 3 * vel, period=0.2 + 0.4 * (vel)))
 
 
 
